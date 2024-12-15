@@ -6,4 +6,6 @@
     <string name="todo">TODO</string>
     <string name="preferences_key">OhtomiImei</string>
     <string name="car_id">車両ID：</string>
+    <string name="bottom_navigation_home">ホーム</string>
+    <string name="bottom_navigation_sensor_list">センサー</string>
 </resources>
