@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             DeliveryAppTheme {
                 Surface(modifier = Modifier.fillMaxSize(),
@@ -34,10 +35,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun NavGraphBuilder.homeView() {
+private fun NavGraphBuilder.mainScreen() {
     navigation(route = "main", startDestination = "main/entry") {
         composable("main/entry") {
-            HomeView()
+            MainScreen()
         }
     }
 }
@@ -48,7 +49,7 @@ fun DeliveryAppNavHost(
     startDestination: String = "main"
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
-        homeView() // 拡張関数 NavGraphBuilder.homeViewを呼び出す
+        mainScreen() // 拡張関数 NavGraphBuilder.mainScreenを呼び出す
     }
 }
 
