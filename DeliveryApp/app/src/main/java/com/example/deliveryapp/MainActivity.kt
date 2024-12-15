@@ -5,12 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
+import androidx.navigation.compose.rememberNavController
 import com.example.deliveryapp.ui.theme.DeliveryAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +24,39 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DeliveryAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Surface(modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    DeliveryAppNavHost()
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+private fun NavGraphBuilder.homeView() {
+    navigation(route = "main", startDestination = "main/entry") {
+        composable("main/entry") {
+            HomeView()
+        }
+    }
 }
+
+@Composable
+fun DeliveryAppNavHost(
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = "main"
+) {
+    NavHost(navController = navController, startDestination = startDestination) {
+        homeView() // 拡張関数 NavGraphBuilder.homeViewを呼び出す
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun DeliveryAppNavHostPreview() {
     DeliveryAppTheme {
-        Greeting("Android")
+        DeliveryAppNavHost()
     }
 }
