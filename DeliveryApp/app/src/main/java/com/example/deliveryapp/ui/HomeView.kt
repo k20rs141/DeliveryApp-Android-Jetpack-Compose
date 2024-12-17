@@ -1,4 +1,4 @@
-package com.example.deliveryapp
+package com.example.deliveryapp.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,6 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.deliveryapp.R
 import com.example.deliveryapp.ui.theme.DeliveryAppTheme
 import com.example.deliveryapp.ui.theme.Typography
 import kotlinx.coroutines.delay
@@ -100,7 +100,8 @@ fun MainScreen() {
                     HomeView()
                 }
                 composable("main/list") {
-                    Text("main/list")
+//                    SensorListView(sensorData = )
+                    Text("aa")
                 }
             }
         }
@@ -147,7 +148,7 @@ private fun HomeView() {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp)
+                .height(45.dp)
                 .background(color = MaterialTheme.colorScheme.primary)
         ) {
             Image(
