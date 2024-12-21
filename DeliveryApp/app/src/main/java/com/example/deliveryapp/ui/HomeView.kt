@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -100,8 +101,11 @@ fun MainScreen() {
                     HomeView()
                 }
                 composable("main/list") {
-//                    SensorListView(sensorData = )
-                    Text("aa")
+                    val sensorListViewModel: SensorListViewModel = viewModel(factory = SensorListViewModel.Factory)
+                    SensorListView(
+                        sensorDataUiState = sensorListViewModel.sensorUiState,
+                        retryAction = sensorListViewModel::getSensorData
+                    )
                 }
             }
         }
