@@ -38,8 +38,6 @@ android {
         jvmTarget = "21"
     }
     buildFeatures {
-        dataBinding = true
-        viewBinding = true
         compose = true
     }
 }
