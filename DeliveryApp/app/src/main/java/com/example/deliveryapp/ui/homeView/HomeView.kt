@@ -1,4 +1,4 @@
-package com.example.deliveryapp.ui
+package com.example.deliveryapp.ui.homeView
 
 import android.app.Application
 import android.content.Intent
@@ -52,11 +52,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.deliveryapp.OhtomiApplication
 import com.example.deliveryapp.R
-import com.example.deliveryapp.model.OhtomiRepository
+import com.example.deliveryapp.model.LocationService
+import com.example.deliveryapp.ui.LocationViewModel
 import com.example.deliveryapp.ui.dialog.CarIdInputDialog
 import com.example.deliveryapp.ui.dialog.LocationRequestDialog
+import com.example.deliveryapp.ui.rememberLocationPermissionState
+import com.example.deliveryapp.ui.sensorListView.SensorListView
+import com.example.deliveryapp.ui.sensorListView.SensorListViewModel
 import com.example.deliveryapp.ui.theme.DeliveryAppTheme
 import com.example.deliveryapp.ui.theme.Typography
 import com.google.accompanist.permissions.ExperimentalPermissionsApi

@@ -1,4 +1,4 @@
-package com.example.deliveryapp.ui
+package com.example.deliveryapp.ui.sensorListView
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,12 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.deliveryapp.R
 import com.example.deliveryapp.data.SensorData
-import com.example.deliveryapp.ui.component.SensorCard
-import com.example.deliveryapp.ui.theme.DeliveryAppTheme
 
 @Composable
 fun SensorListView(

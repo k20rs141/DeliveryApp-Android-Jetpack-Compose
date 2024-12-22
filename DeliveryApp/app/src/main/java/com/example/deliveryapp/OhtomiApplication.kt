@@ -6,7 +6,7 @@ import android.app.NotificationManager
 import android.os.Build
 import com.example.deliveryapp.data.AppContainer
 import com.example.deliveryapp.data.DefaultAppContainer
-import com.example.deliveryapp.ui.LocationService
+import com.example.deliveryapp.model.LocationService
 
 class OhtomiApplication: Application() {
     lateinit var container: AppContainer

@@ -1,4 +1,4 @@
-package com.example.deliveryapp.ui
+package com.example.deliveryapp.model
 
 object HubenyDistance {
     //世界観測値系

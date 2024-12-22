@@ -1,4 +1,4 @@
-package com.example.deliveryapp.ui
+package com.example.deliveryapp.ui.sensorListView
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

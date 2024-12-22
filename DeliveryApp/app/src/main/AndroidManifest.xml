@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".ui.LocationService"
+        <service android:name=".model.LocationService"
             android:foregroundServiceType="location" />
     </application>
 

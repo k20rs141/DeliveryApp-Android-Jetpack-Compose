@@ -1,4 +1,4 @@
-package com.example.deliveryapp.ui.component
+package com.example.deliveryapp.ui.sensorListView
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.CardDefaults

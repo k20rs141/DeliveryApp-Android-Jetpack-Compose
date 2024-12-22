@@ -1,4 +1,4 @@
-package com.example.deliveryapp.ui
+package com.example.deliveryapp.model
 
 import android.Manifest
 import android.app.Service
@@ -48,7 +48,7 @@ class LocationService: Service() {
             super.onLocationResult(result)
             val location: Location? = result.lastLocation
             location?.let {
-                getLocationData(it)
+//                getLocationData(it)
                 Log.d("LocationService", "Location: ${location.latitude}, ${location.longitude}, ${location.speed}, ${location.bearing}")
             }
         }
@@ -100,7 +100,7 @@ class LocationService: Service() {
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    private fun getDeviceIdentifier() {
+    fun getDeviceIdentifier() {
         val sharedPreferences = applicationContext.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         val key = "android_id"
         // SharedPreferences に保存されている場合はそれを返す
@@ -120,10 +120,10 @@ class LocationService: Service() {
     }
 
     private fun startLocationUpdates() {
-        val locationInterval: Long = 30000 // 30秒ごとに更新
+        val locationInterval: Long = 3000 // 30秒ごとに更新
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, locationInterval)
             .setWaitForAccurateLocation(false)
-            .setMinUpdateIntervalMillis(10000)
+            .setMinUpdateIntervalMillis(1000)
             .build()
 
         if (ActivityCompat.checkSelfPermission(
@@ -180,7 +180,7 @@ class LocationService: Service() {
         }
     }
 
-    private fun fetchCarId(deviceIdentifier: String, carId: Int) {
+    fun fetchCarId(deviceIdentifier: String, carId: Int) {
         val repository = DefaultAppContainer().ohtomiRepository
 
         CoroutineScope(Dispatchers.IO).launch {
