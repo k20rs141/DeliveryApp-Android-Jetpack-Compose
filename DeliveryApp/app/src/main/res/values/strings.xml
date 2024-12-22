@@ -10,4 +10,5 @@
     <string name="bottom_navigation_sensor_list">センサー</string>
     <string name="loading_failed">ロードに失敗しました</string>
     <string name="retry">再読み込み</string>
+    <string name="measurement_progress">測定中…</string>
 </resources>
