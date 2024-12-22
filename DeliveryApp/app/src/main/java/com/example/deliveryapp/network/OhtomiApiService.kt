@@ -1,12 +1,22 @@
 package com.example.deliveryapp.network
 
-import com.example.deliveryapp.data.CarData
 import com.example.deliveryapp.data.LocationData
 import com.example.deliveryapp.data.SensorData
+import okhttp3.ResponseBody
+import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Headers
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface OhtomiApiService {
+    @Headers("Content-Type: text/plain")
+    @POST("ohtomi/deviceTokenA.php")
+    suspend fun postDeviceToken(
+        @Body deviceToken: String
+    )
+
     @GET("androidApp/ocs_insert.php")
     suspend fun getLocationData(
         @Query("rate") heartRate: Int,
@@ -23,13 +33,13 @@ interface OhtomiApiService {
         @Query("user_acceleration_z") userAccelerationZ: Int,
         @Query("battery") battery: Int,
         @Query("localTime") localTime: String
-    ): List<LocationData>
+    ): Response<ResponseBody>
 
     @GET("androidApp/ocs_insertIMEI.php")
     suspend fun getDeviceData(
         @Query("IMEI") imei: String,
         @Query("t_num") carId: Int
-    ): List<CarData>
+    ): Int
 
     @GET("co2/dbread.php")
     suspend fun getSensorData(

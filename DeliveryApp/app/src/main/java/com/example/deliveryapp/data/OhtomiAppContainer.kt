@@ -11,18 +11,28 @@ interface AppContainer {
 }
 
 class DefaultAppContainer : AppContainer {
-    private val baseUrl = "https://ohtomi.apps.kyusan-u.ac.jp/"
+    private val deviceTokenUrl = "http://133.17.165.165:8086/"
+    private val ohtomiUrl = "https://ohtomi.apps.kyusan-u.ac.jp/"
 
-    private val retrofit: Retrofit = Retrofit.Builder()
+    private val deviceTokenRetrofit: Retrofit = Retrofit.Builder()
         .addConverterFactory(GsonConverterFactory.create())
-        .baseUrl(baseUrl)
+        .baseUrl(deviceTokenUrl)
         .build()
 
-    private val retrofitService: OhtomiApiService by lazy {
-        retrofit.create(OhtomiApiService::class.java)
+    private val ohtomiRetrofit: Retrofit = Retrofit.Builder()
+        .addConverterFactory(GsonConverterFactory.create())
+        .baseUrl(ohtomiUrl)
+        .build()
+
+    private val deviceTokenApiService: OhtomiApiService by lazy {
+        deviceTokenRetrofit.create(OhtomiApiService::class.java)
+    }
+
+    private val ohtomiApiService: OhtomiApiService by lazy {
+        ohtomiRetrofit.create(OhtomiApiService::class.java)
     }
 
     override val ohtomiRepository: OhtomiRepository by lazy {
-        NetworkOhtomiRepository(retrofitService)
+        NetworkOhtomiRepository(deviceTokenApiService, ohtomiApiService)
     }
 }

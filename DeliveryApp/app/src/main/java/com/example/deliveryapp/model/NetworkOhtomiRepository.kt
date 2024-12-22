@@ -1,11 +1,13 @@
 package com.example.deliveryapp.model
 
-import com.example.deliveryapp.data.CarData
 import com.example.deliveryapp.data.LocationData
 import com.example.deliveryapp.data.SensorData
 import com.example.deliveryapp.network.OhtomiApiService
+import okhttp3.ResponseBody
+import retrofit2.Response
 
 interface OhtomiRepository {
+    suspend fun postDeviceToken(deviceToken: String)
     suspend fun getLocationData(
         heartRate: Int,
         lat: Double,
@@ -21,15 +23,18 @@ interface OhtomiRepository {
         userAccelerationZ: Int,
         battery: Int,
         localTime: String
-    ): List<LocationData>
-    suspend fun getDeviceData(imie: String, carId: Int): List<CarData>
+    ): Response<ResponseBody>
+    suspend fun getDeviceData(imie: String, carId: Int): Int
     suspend fun getSensorData(carId: Int, limit: Int): List<SensorData>
 }
 
 
 class NetworkOhtomiRepository(
+    private val deviceTokenApiService: OhtomiApiService,
     private val ohtomiApiService: OhtomiApiService
 ) : OhtomiRepository {
+    override suspend fun postDeviceToken(deviceToken: String) {}
+
     override suspend fun getLocationData(
         heartRate: Int,
         lat: Double,
@@ -45,7 +50,7 @@ class NetworkOhtomiRepository(
         userAccelerationZ: Int,
         battery: Int,
         localTime: String
-    ): List<LocationData> = ohtomiApiService.getLocationData(
+    ): Response<ResponseBody> = ohtomiApiService.getLocationData(
         heartRate = heartRate,
         lat = lat,
         lon = lon,
@@ -62,7 +67,7 @@ class NetworkOhtomiRepository(
         localTime = localTime
     )
 
-    override suspend fun getDeviceData(imei: String, carId: Int): List<CarData> = ohtomiApiService.getDeviceData(
+    override suspend fun getDeviceData(imei: String, carId: Int): Int = ohtomiApiService.getDeviceData(
         imei = imei,
         carId = carId
     )
