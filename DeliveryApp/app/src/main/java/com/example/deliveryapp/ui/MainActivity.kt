@@ -1,5 +1,6 @@
 package com.example.deliveryapp.ui
 
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,13 +10,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.deliveryapp.OhtomiApplication
 import com.example.deliveryapp.ui.theme.DeliveryAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -38,7 +44,12 @@ class MainActivity : ComponentActivity() {
 private fun NavGraphBuilder.mainScreen() {
     navigation(route = "main", startDestination = "main/entry") {
         composable("main/entry") {
-            MainScreen()
+//            val context = LocalContext.current
+//            val viewModel: LocationViewModel = viewModel(factory = LocationViewModel.Factory)
+//            val locationViewModel: LocationViewModel = viewModel(
+//                factory = LocationViewModel(context = context, repository = viewModel)
+//            )
+            MainScreen(locationViewModel = LocationViewModel(application = Application()))
         }
     }
 }
