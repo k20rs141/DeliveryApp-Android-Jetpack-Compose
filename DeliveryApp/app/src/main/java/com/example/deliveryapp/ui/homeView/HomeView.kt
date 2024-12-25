@@ -180,13 +180,14 @@ private fun HomeView(locationViewModel: LocationViewModel) {
 
     if (showCarIdInputDialog.value) {
         CarIdInputDialog(
-            carId = carId,
+            carId = carId ?: 0,
             onConfirmClick = { newCarId ->
-                val intent = Intent(context, LocationService::class.java).apply {
-                    action = LocationService.ACTION_UPDATE_CAR_ID
-                    putExtra(LocationService.EXTRA_CAR_ID, newCarId)
-                }
-                context.startService(intent)
+//                val intent = Intent(context, LocationService::class.java).apply {
+//                    action = LocationService.ACTION_UPDATE_CAR_ID
+//                    putExtra(LocationService.EXTRA_CAR_ID, newCarId)
+//                }
+//                context.startService(intent)
+                locationViewModel.updateCarId(newCarId.toInt())
                 showCarIdInputDialog.value = false
             },
             onDismissRequest = { showCarIdInputDialog.value = false }
@@ -217,7 +218,7 @@ private fun HomeView(locationViewModel: LocationViewModel) {
                         .width(32.dp)
                 )
                 Text(
-                    text = "車両ID: ${carId}",
+                    text = "車両ID: ${carId ?: "取得中..."}",
                     style = Typography.titleMedium,
                     color = Color.White
                 )
