@@ -5,7 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import com.example.deliveryapp.data.AppContainer
-import com.example.deliveryapp.data.DefaultAppContainer
+import com.example.deliveryapp.data.OhtomiAppContainer
 import com.example.deliveryapp.model.LocationService
 
 class OhtomiApplication: Application() {
@@ -13,7 +13,7 @@ class OhtomiApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
-        container = DefaultAppContainer()
+        container = OhtomiAppContainer()
         createNotificationChannel()
     }
 

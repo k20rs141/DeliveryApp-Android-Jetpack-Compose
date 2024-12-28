@@ -1,10 +1,11 @@
 package com.example.deliveryapp.ui
 
-import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,23 +22,28 @@ import com.example.deliveryapp.ui.homeView.MainScreen
 import com.example.deliveryapp.ui.theme.DeliveryAppTheme
 
 class MainActivity : ComponentActivity() {
+    val locationViewModel: LocationViewModel by viewModels()
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val serviceIntent = Intent(this, LocationViewModel::class.java)
+        startService(serviceIntent)
 
         setContent {
             DeliveryAppTheme {
                 Surface(modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DeliveryAppNavHost()
+                    DeliveryAppNavHost(viewModel = locationViewModel)
                 }
             }
         }
     }
 }
 
-private fun NavGraphBuilder.mainScreen() {
+private fun NavGraphBuilder.mainScreen(viewModel: LocationViewModel) {
     navigation(route = "main", startDestination = "main/entry") {
         composable("main/entry") {
 //            val context = LocalContext.current
@@ -45,7 +51,7 @@ private fun NavGraphBuilder.mainScreen() {
 //            val locationViewModel: LocationViewModel = viewModel(
 //                factory = LocationViewModel(context = context, repository = viewModel)
 //            )
-            MainScreen(locationViewModel = LocationViewModel(application = Application()))
+            MainScreen(locationViewModel = viewModel)
         }
     }
 }
@@ -53,10 +59,11 @@ private fun NavGraphBuilder.mainScreen() {
 @Composable
 fun DeliveryAppNavHost(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = "main"
+    startDestination: String = "main",
+    viewModel: LocationViewModel
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
-        mainScreen() // 拡張関数 NavGraphBuilder.mainScreenを呼び出す
+        mainScreen(viewModel = viewModel) // 拡張関数 NavGraphBuilder.mainScreenを呼び出す
     }
 }
 
@@ -64,7 +71,10 @@ fun DeliveryAppNavHost(
 @Preview(showBackground = true)
 @Composable
 fun DeliveryAppNavHostPreview() {
+    val locationViewModel: LocationViewModel by ComponentActivity().viewModels()
     DeliveryAppTheme {
-        DeliveryAppNavHost()
+        DeliveryAppNavHost(
+            viewModel = locationViewModel
+        )
     }
 }

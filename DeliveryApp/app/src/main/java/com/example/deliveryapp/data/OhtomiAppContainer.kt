@@ -10,7 +10,7 @@ interface AppContainer {
     val ohtomiRepository: OhtomiRepository
 }
 
-class DefaultAppContainer : AppContainer {
+class OhtomiAppContainer : AppContainer {
     private val deviceTokenUrl = "http://133.17.165.165:8086/"
     private val ohtomiUrl = "https://ohtomi.apps.kyusan-u.ac.jp/"
 

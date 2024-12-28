@@ -6,6 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.location.Location
 import android.os.BatteryManager
 import android.os.IBinder
@@ -15,7 +18,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.example.deliveryapp.R
-import com.example.deliveryapp.data.DefaultAppContainer
+import com.example.deliveryapp.data.OhtomiAppContainer
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -29,10 +32,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class LocationService: Service() {
+class LocationService: Service(), SensorEventListener {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var deviceIdentifier: String = ""
     private var carId: Int = 0
+
 
     companion object {
         const val CHANNEL_ID = "location_channel"
@@ -48,7 +52,7 @@ class LocationService: Service() {
             super.onLocationResult(result)
             val location: Location? = result.lastLocation
             location?.let {
-//                getLocationData(it)
+                getLocationData(it)
                 Log.d("LocationService", "Location: ${location.latitude}, ${location.longitude}, ${location.speed}, ${location.bearing}")
             }
         }
@@ -59,13 +63,12 @@ class LocationService: Service() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        startLocationUpdates()
+        startForegroundServiceWithNotification()
         getDeviceIdentifier()
+        startLocationUpdates()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForegroundServiceWithNotification()
-        startLocationUpdates()
         intent?.let {
             if (it.action == ACTION_UPDATE_CAR_ID) {
                 val newCarId = it.getIntExtra(EXTRA_CAR_ID, -1)
@@ -100,7 +103,7 @@ class LocationService: Service() {
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    fun getDeviceIdentifier() {
+    private fun getDeviceIdentifier() {
         val sharedPreferences = applicationContext.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         val key = "android_id"
         // SharedPreferences に保存されている場合はそれを返す
@@ -143,17 +146,13 @@ class LocationService: Service() {
     }
 
     private fun getLocationData(location: Location) {
-        // SharedPreferences から carId を取得
-        val prefs = applicationContext.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val androidId = prefs.getString("android_id", "") ?: ""
-
         val date = Date()
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val localTime: String = format.format(date).toString()
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = DefaultAppContainer().ohtomiRepository.getLocationData(
+                val response = OhtomiAppContainer().ohtomiRepository.getLocationData(
                     heartRate = 0,
                     lat = location.latitude,
                     lon = location.longitude,
@@ -181,16 +180,16 @@ class LocationService: Service() {
     }
 
     fun fetchCarId(deviceIdentifier: String, carId: Int) {
-        val repository = DefaultAppContainer().ohtomiRepository
+        val repository = OhtomiAppContainer().ohtomiRepository
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val carId = repository.getDeviceData(imie = deviceIdentifier, carId = carId)
-                Log.d("LocationService", "取得したCarId: $carId")
+                val fetchedCarId = repository.getDeviceData(imie = deviceIdentifier, carId = carId)
+                Log.d("LocationService", "取得したCarId: $fetchedCarId")
 
                 // ViewModelに通知するためBroadcastを送信
                 val intent = Intent("CAR_ID_UPDATED").apply {
-                    putExtra("car_id", carId)
+                    putExtra("car_id", fetchedCarId)
                 }
                 sendBroadcast(intent)
             } catch (e: Exception) {
@@ -211,5 +210,13 @@ class LocationService: Service() {
         }
 
         return batteryPct!!.toInt()
+    }
+
+    override fun onSensorChanged(p0: SensorEvent?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+        TODO("Not yet implemented")
     }
 }
