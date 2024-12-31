@@ -2,11 +2,13 @@ package com.example.deliveryapp.ui.sensorListView
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -33,17 +35,22 @@ fun SensorListView(
         is SensorDataUiState.Success -> SensorListScreen(
             sensorDataUiState.sensors, modifier = modifier.fillMaxWidth()
         )
-        is SensorDataUiState.Error -> ErrorScreen(retryAction, modifier = modifier.width(64.dp))
+        is SensorDataUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
     }
 }
 
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier) {
-    CircularProgressIndicator(
+    Box(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.primary,
-        trackColor = MaterialTheme.colorScheme.surfaceVariant
-    )
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(64.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    }
 }
 
 @Composable
