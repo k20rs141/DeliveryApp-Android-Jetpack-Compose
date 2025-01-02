@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
 import android.os.BatteryManager
 import android.os.IBinder
@@ -17,43 +18,62 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.viewModelScope
 import com.example.deliveryapp.R
-import com.example.deliveryapp.data.OhtomiAppContainer
+import com.example.deliveryapp.data.LocationData
+import com.example.deliveryapp.network.OhtomiApiService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
-class LocationService: Service(), SensorEventListener {
+@AndroidEntryPoint
+class LocationService : Service(), SensorEventListener {
+    @Inject
+    lateinit var ohtomiRepository: OhtomiRepository
+    @Inject
+    lateinit var deviceInfoRepository: DeviceInfoRepository
+
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var deviceIdentifier: String = ""
+    private lateinit var sensorManager: SensorManager
+    private var accelerometer: Sensor? = null
+    private var currentAcceleration = AccelerationData(0f, 0f, 0f)
+    private var previousLatitude: Double = 0.0
+    private var previousLongitude: Double = 0.0
+    private var previousTimeMillis: Long = 0
+
     private var carId: Int = 0
 
+    data class AccelerationData(
+        val x: Float,
+        val y: Float,
+        val z: Float
+    )
 
     companion object {
         const val CHANNEL_ID = "location_channel"
         const val CHANNEL_NAME = "Location Service Channel"
         const val NOTIFICATION_ID = 1
-
-        const val ACTION_UPDATE_CAR_ID = "com.example.deliveryapp.ACTION_UPDATE_CAR_ID"
-        const val EXTRA_CAR_ID = "extra_car_id"
     }
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             super.onLocationResult(result)
-            val location: Location? = result.lastLocation
-            location?.let {
-                getLocationData(it)
-                Log.d("LocationService", "Location: ${location.latitude}, ${location.longitude}, ${location.speed}, ${location.bearing}")
+            result.lastLocation?.let { location ->
+                getLocationData(location)
             }
         }
     }
@@ -63,30 +83,22 @@ class LocationService: Service(), SensorEventListener {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+
         startForegroundServiceWithNotification()
-        getDeviceIdentifier()
         startLocationUpdates()
+        startAccelerometerUpdates()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.let {
-            if (it.action == ACTION_UPDATE_CAR_ID) {
-                val newCarId = it.getIntExtra(EXTRA_CAR_ID, -1)
-                if (newCarId != -1) {
-                    Log.d("LocationService", "新しいCarIdを受信: $newCarId")
-                    fetchCarId(deviceIdentifier, newCarId)
-                } else {
-                    Log.e("LocationService", "無効なCarIdが受信されました")
-                }
-            }
-        }
-
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        sensorManager.unregisterListener(this)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -101,25 +113,6 @@ class LocationService: Service(), SensorEventListener {
             .build()
 
         startForeground(NOTIFICATION_ID, notification)
-    }
-
-    private fun getDeviceIdentifier() {
-        val sharedPreferences = applicationContext.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-        val key = "android_id"
-        // SharedPreferences に保存されている場合はそれを返す
-        val savedAndroidId = sharedPreferences.getString(key, null)
-        // 初回取得時に ANDROID_ID を取得して保存
-        val currentAndroidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-
-        if (savedAndroidId == null || savedAndroidId != currentAndroidId) {
-            sharedPreferences.edit().putString(key, currentAndroidId).apply()
-            deviceIdentifier = currentAndroidId
-            fetchCarId(deviceIdentifier = currentAndroidId, carId = carId)
-            Log.d("LocationService", "ANDROID_ID: $currentAndroidId")
-        } else {
-            deviceIdentifier = savedAndroidId
-            Log.d("LocationService", "ANDROID_ID:saved: $savedAndroidId")
-        }
     }
 
     private fun startLocationUpdates() {
@@ -150,51 +143,64 @@ class LocationService: Service(), SensorEventListener {
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val localTime: String = format.format(date).toString()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val response = OhtomiAppContainer().ohtomiRepository.getLocationData(
-                    heartRate = 0,
-                    lat = location.latitude,
-                    lon = location.longitude,
-                    carId = carId,
-                    speed = location.speed.toInt(),
-                    distance = 0,
-                    timeGap = 0,
-                    bearing = location.bearing.toInt(),
-                    calculatedSpeed = 0,
-                    userAccelerationX = 0,
-                    userAccelerationY = 0,
-                    userAccelerationZ = 0,
-                    battery = getBattery(),
-                    localTime = localTime
-                )
+        val hourlySpeed = location.speed * 3.6
+        val currentTimeMillis = System.currentTimeMillis()
 
-                if (response.isSuccessful) { // ocs_insert.phpのレスポンスをJson形式に変えてくれると...
-                    val responseBody = response.body()?.string()
-                    Log.d("LocationService", "LocationData APIレスポンス: $responseBody")
-                }
-            } catch (e: Exception) {
-                Log.e("LocationService", "LocationData APIリクエスト失敗: ${e.message}")
+        val distance = HubenyDistance.calcDistance(
+            previousLatitude,
+            previousLongitude,
+            location.latitude,
+            location.longitude
+        )
+
+        val timeMillsGap = currentTimeMillis - previousTimeMillis
+        val timeGap = timeMillsGap / 1000
+        val calculatedSpeed = (distance / timeGap) * 3.6
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val deviceInfo = deviceInfoRepository.getDeviceInfo()
+            deviceInfo?.carId?.let {
+                carId = it
+            }
+        }
+
+        val locationData = LocationData(
+            heartRate = 0,
+            lat = location.latitude,
+            lon = location.longitude,
+            carId = carId,
+            speed = hourlySpeed.toInt(),
+            distance = distance.toInt(),
+            timeGap = timeGap.toInt(),
+            bearing = location.bearing.toInt(),
+            calculatedSpeed = calculatedSpeed.toInt(),
+            userAccelerationX = currentAcceleration.x.toInt(),
+            userAccelerationY = currentAcceleration.y.toInt(),
+            userAccelerationZ = currentAcceleration.z.toInt(),
+            battery = getBattery(),
+            localTime = localTime
+        )
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = ohtomiRepository.sendLocationData(locationData)
+            result.onSuccess { data ->
+                previousLatitude = locationData.lat
+                previousLongitude = locationData.lon
+                previousTimeMillis = currentTimeMillis
+                Log.d("LocationService", "Location: ${locationData}")
+            }.onFailure { error ->
+
             }
         }
     }
 
-    fun fetchCarId(deviceIdentifier: String, carId: Int) {
-        val repository = OhtomiAppContainer().ohtomiRepository
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val fetchedCarId = repository.getDeviceData(imie = deviceIdentifier, carId = carId)
-                Log.d("LocationService", "取得したCarId: $fetchedCarId")
-
-                // ViewModelに通知するためBroadcastを送信
-                val intent = Intent("CAR_ID_UPDATED").apply {
-                    putExtra("car_id", fetchedCarId)
-                }
-                sendBroadcast(intent)
-            } catch (e: Exception) {
-                Log.e("LocationService", "APIリクエスト失敗: ${e.message}")
-            }
+    private fun startAccelerometerUpdates() {
+        accelerometer?.let { sensor ->
+            sensorManager.registerListener(
+                this,
+                sensor,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
         }
     }
 
@@ -212,11 +218,18 @@ class LocationService: Service(), SensorEventListener {
         return batteryPct!!.toInt()
     }
 
-    override fun onSensorChanged(p0: SensorEvent?) {
-        TODO("Not yet implemented")
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event?.sensor?.type == Sensor.TYPE_LINEAR_ACCELERATION) {
+            currentAcceleration = AccelerationData(
+                x = event.values[0],
+                y = event.values[1],
+                z = event.values[2]
+            )
+        }
     }
 
-    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
-        TODO("Not yet implemented")
+    // センサーの精度が変更された時の処理
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        Log.d("LocationService", "Sensor accuracy changed: $accuracy")
     }
 }

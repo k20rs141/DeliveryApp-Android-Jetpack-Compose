@@ -4,16 +4,13 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import com.example.deliveryapp.data.AppContainer
-import com.example.deliveryapp.data.OhtomiAppContainer
 import com.example.deliveryapp.model.LocationService
+import dagger.hilt.android.HiltAndroidApp
 
+@HiltAndroidApp
 class OhtomiApplication: Application() {
-    lateinit var container: AppContainer
-
     override fun onCreate() {
         super.onCreate()
-        container = OhtomiAppContainer()
         createNotificationChannel()
     }
 
