@@ -1,6 +1,5 @@
 package com.example.deliveryapp.ui
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,50 +19,48 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.deliveryapp.ui.homeView.MainScreen
 import com.example.deliveryapp.ui.theme.DeliveryAppTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     val locationViewModel: LocationViewModel by viewModels()
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        val serviceIntent = Intent(this, LocationViewModel::class.java)
-        startService(serviceIntent)
 
         setContent {
             DeliveryAppTheme {
                 Surface(modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DeliveryAppNavHost(viewModel = locationViewModel)
+                    DeliveryAppNavHost(
+                        navController = rememberNavController(),
+                        startDestination = "main",
+                        locationViewModel
+                    )
                 }
             }
         }
     }
 }
 
-private fun NavGraphBuilder.mainScreen(viewModel: LocationViewModel) {
+private fun NavGraphBuilder.mainScreen(locationViewModel: LocationViewModel) {
     navigation(route = "main", startDestination = "main/entry") {
         composable("main/entry") {
-//            val context = LocalContext.current
-//            val viewModel: LocationViewModel = viewModel(factory = LocationViewModel.Factory)
-//            val locationViewModel: LocationViewModel = viewModel(
-//                factory = LocationViewModel(context = context, repository = viewModel)
-//            )
-            MainScreen(locationViewModel = viewModel)
+            MainScreen(locationViewModel)
         }
     }
 }
 
 @Composable
 fun DeliveryAppNavHost(
-    navController: NavHostController = rememberNavController(),
-    startDestination: String = "main",
-    viewModel: LocationViewModel
+    navController: NavHostController,
+    startDestination: String,
+    locationViewModel: LocationViewModel
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
-        mainScreen(viewModel = viewModel) // 拡張関数 NavGraphBuilder.mainScreenを呼び出す
+        mainScreen(locationViewModel) // 拡張関数 NavGraphBuilder.mainScreenを呼び出す
     }
 }
 
@@ -74,7 +71,9 @@ fun DeliveryAppNavHostPreview() {
     val locationViewModel: LocationViewModel by ComponentActivity().viewModels()
     DeliveryAppTheme {
         DeliveryAppNavHost(
-            viewModel = locationViewModel
+            navController = rememberNavController(),
+            startDestination = "main",
+            locationViewModel = locationViewModel
         )
     }
 }

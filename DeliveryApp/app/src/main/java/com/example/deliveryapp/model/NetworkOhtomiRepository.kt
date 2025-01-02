@@ -2,78 +2,107 @@ package com.example.deliveryapp.model
 
 import com.example.deliveryapp.data.LocationData
 import com.example.deliveryapp.data.SensorData
+import com.example.deliveryapp.network.DeviceTokenApiService
 import com.example.deliveryapp.network.OhtomiApiService
-import okhttp3.ResponseBody
-import retrofit2.Response
+import javax.inject.Inject
+import javax.inject.Singleton
 
 interface OhtomiRepository {
-    suspend fun postDeviceToken(deviceToken: String)
-    suspend fun getLocationData(
-        heartRate: Int,
-        lat: Double,
-        lon: Double,
-        carId: Int,
-        speed: Int,
-        distance: Int,
-        timeGap: Int,
-        bearing: Int,
-        calculatedSpeed: Int,
-        userAccelerationX: Int,
-        userAccelerationY: Int,
-        userAccelerationZ: Int,
-        battery: Int,
-        localTime: String
-    ): Response<ResponseBody>
-    suspend fun getDeviceData(imie: String, carId: Int): Int
-    suspend fun getSensorData(carId: Int, limit: Int): List<SensorData>
+    suspend fun postDeviceToken(deviceToken: String): Result<Unit>
+    suspend fun sendLocationData(locationData: LocationData): Result<Unit>
+    suspend fun getDeviceData(imei: String, carId: Int): Result<Int>
+    suspend fun getSensorData(carId: Int, limit: Int): Result<List<SensorData>>
 }
 
-
-class NetworkOhtomiRepository(
-    private val deviceTokenApiService: OhtomiApiService,
+@Singleton
+class OhtomiRepositoryImpl @Inject constructor(
+    private val deviceTokenApiService: DeviceTokenApiService,
     private val ohtomiApiService: OhtomiApiService
-) : OhtomiRepository {
-    override suspend fun postDeviceToken(deviceToken: String) {}
+): OhtomiRepository {
+    override suspend fun postDeviceToken(deviceToken: String): Result<Unit> {
+        return try {
+            val response = deviceTokenApiService.postDeviceToken(deviceToken)
+            if (response.isSuccessful) {
+                val result = response.body()
+                if (result != null) {
+                    Result.success(result)
+                } else {
+                    Result.failure(Exception("Response body is null"))
+                }
+            } else {
+                Result.failure(Exception("API error: ${response.code()} ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-    override suspend fun getLocationData(
-        heartRate: Int,
-        lat: Double,
-        lon: Double,
-        carId: Int,
-        speed: Int,
-        distance: Int,
-        timeGap: Int,
-        bearing: Int,
-        calculatedSpeed: Int,
-        userAccelerationX: Int,
-        userAccelerationY: Int,
-        userAccelerationZ: Int,
-        battery: Int,
-        localTime: String
-    ): Response<ResponseBody> = ohtomiApiService.getLocationData(
-        heartRate = heartRate,
-        lat = lat,
-        lon = lon,
-        carId = carId,
-        speed = speed,
-        distance = distance,
-        timeGap = timeGap,
-        bearing = bearing,
-        calculatedSpeed = calculatedSpeed,
-        userAccelerationX = userAccelerationX,
-        userAccelerationY = userAccelerationY,
-        userAccelerationZ = userAccelerationZ,
-        battery = battery,
-        localTime = localTime
-    )
+    override suspend fun sendLocationData(locationData: LocationData): Result<Unit> {
+        return try {
+            val response = ohtomiApiService.sendLocation(
+                heartRate = locationData.heartRate,
+                lat = locationData.lat,
+                lon = locationData.lon,
+                carId = locationData.carId,
+                speed = locationData.speed,
+                distance = locationData.distance,
+                timeGap = locationData.timeGap,
+                bearing = locationData.bearing,
+                calculatedSpeed = locationData.calculatedSpeed,
+                userAccelerationX = locationData.userAccelerationX,
+                userAccelerationY = locationData.userAccelerationY,
+                userAccelerationZ = locationData.userAccelerationZ,
+                battery = locationData.battery,
+                localTime = locationData.localTime
+            )
+            if (response.isSuccessful) {
+                val result = response.body()
+                if (result != null) {
+                    Result.success(result)
+                } else {
+                    Result.failure(Exception("Response body is null"))
+                }
+            } else {
+                Result.failure(Exception("API error: ${response.code()} ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-    override suspend fun getDeviceData(imei: String, carId: Int): Int = ohtomiApiService.getDeviceData(
-        imei = imei,
-        carId = carId
-    )
+    override suspend fun getDeviceData(imei: String, carId: Int): Result<Int> {
+        return try {
+            val response = ohtomiApiService.getDevice(imei, carId)
+            if (response.isSuccessful) {
+                val carId = response.body()
+                if (carId != null) {
+                    Result.success(carId)
+                } else {
+                    Result.failure(Exception("Response body is null"))
+                }
+            } else {
+                Result.failure(Exception("API error: ${response.code()} ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-    override suspend fun getSensorData(carId: Int, limit: Int): List<SensorData> = ohtomiApiService.getSensorData(
-        carId = carId,
-        limit = limit
-    )
+    override suspend fun getSensorData(carId: Int, limit: Int): Result<List<SensorData>> {
+        return try {
+            val response = ohtomiApiService.getSensor(carId, limit)
+            if (response.isSuccessful) {
+                val sensorDataList = response.body()
+                if (sensorDataList != null) {
+                    Result.success(sensorDataList)
+                } else {
+                    Result.failure(Exception("Response body is null"))
+                }
+            } else {
+                Result.failure(Exception("API error: ${response.code()} ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

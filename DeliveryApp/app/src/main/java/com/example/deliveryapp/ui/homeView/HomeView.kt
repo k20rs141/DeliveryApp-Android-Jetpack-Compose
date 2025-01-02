@@ -1,6 +1,5 @@
 package com.example.deliveryapp.ui.homeView
 
-import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -31,8 +30,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,10 +43,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -60,7 +57,6 @@ import com.example.deliveryapp.ui.dialog.LocationRequestDialog
 import com.example.deliveryapp.ui.rememberLocationPermissionState
 import com.example.deliveryapp.ui.sensorListView.SensorListView
 import com.example.deliveryapp.ui.sensorListView.SensorListViewModel
-import com.example.deliveryapp.ui.theme.DeliveryAppTheme
 import com.example.deliveryapp.ui.theme.Typography
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.delay
@@ -117,14 +113,10 @@ fun MainScreen(locationViewModel: LocationViewModel) {
                 modifier = Modifier
             ) {
                 composable("main/home") {
-                    HomeView(locationViewModel = locationViewModel)
+                    HomeView(locationViewModel)
                 }
                 composable("main/list") {
-                    val sensorListViewModel: SensorListViewModel = viewModel(factory = SensorListViewModel.Factory)
-                    SensorListView(
-                        sensorDataUiState = sensorListViewModel.sensorUiState,
-                        retryAction = sensorListViewModel::getSensorData
-                    )
+                    SensorListView()
                 }
             }
         }
@@ -133,22 +125,24 @@ fun MainScreen(locationViewModel: LocationViewModel) {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun HomeView(locationViewModel: LocationViewModel) {
+private fun HomeView(viewModel: LocationViewModel) {
     val currentTime = remember { mutableStateOf("") }
     val currentDate = remember { mutableStateOf("") }
-//    var carId = remember { mutableIntStateOf(555) }
-    var showCarIdInputDialog = remember { mutableStateOf(false) }
+    val showCarIdInputDialog = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val locationPermissionState = rememberLocationPermissionState()
-    val isLocationTracking = locationViewModel.isLocationTracking.value
-    val carId by locationViewModel.carId.observeAsState()
+
+    val isTracking by viewModel.isTracking.collectAsState()
+    val locationState by viewModel.locationState.collectAsState()
+    val deviceId by viewModel.deviceId.collectAsState()
+    val carId by viewModel.carId.collectAsState()
 
     val formattedDate = buildString {
-        val currentDate = LocalDateTime.now()
-        append(currentDate.monthValue).append("月") // 月
-        append(currentDate.dayOfMonth).append("日") // 日
+        val dateTime = LocalDateTime.now()
+        append(dateTime.monthValue).append("月") // 月
+        append(dateTime.dayOfMonth).append("日") // 日
         append("(") // 曜日を括弧で囲む
-        append(currentDate.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.JAPANESE)) // 日本語の曜日 (短縮)
+        append(dateTime.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.JAPANESE)) // 日本語の曜日 (短縮)
         append(")")
     }
 
@@ -182,12 +176,7 @@ private fun HomeView(locationViewModel: LocationViewModel) {
         CarIdInputDialog(
             carId = carId ?: 0,
             onConfirmClick = { newCarId ->
-//                val intent = Intent(context, LocationService::class.java).apply {
-//                    action = LocationService.ACTION_UPDATE_CAR_ID
-//                    putExtra(LocationService.EXTRA_CAR_ID, newCarId)
-//                }
-//                context.startService(intent)
-                locationViewModel.updateCarId(newCarId.toInt())
+                viewModel.registerCarId(newCarId.toInt())
                 showCarIdInputDialog.value = false
             },
             onDismissRequest = { showCarIdInputDialog.value = false }
@@ -242,35 +231,32 @@ private fun HomeView(locationViewModel: LocationViewModel) {
                 color = Color.Black
             )
         }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .width(200.dp)
-                .height(64.dp)
-                .padding(8.dp)
-                .border(
-                    width = 2.dp,
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(32.dp)
-                )
-        ) {
-            Box(
+        Text(deviceId.toString())
+        Text(carId.toString())
+        if (isTracking) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .size(16.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isLocationTracking) {
-                            Color.Red
-                        } else {
-                            Color.Green
-                        }
+                    .width(200.dp)
+                    .height(64.dp)
+                    .padding(8.dp)
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(32.dp)
                     )
-            )
-            Text(
-                text = stringResource(R.string.measurement_progress),
-                modifier = Modifier.background(Color.Cyan)
-            )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(Color.Red)
+                )
+                Text(
+                    text = stringResource(R.string.measurement_progress)
+                )
+            }
         }
         Image(
             painter = painterResource(id = R.drawable.motto),
@@ -294,11 +280,10 @@ private fun HomeView(locationViewModel: LocationViewModel) {
             Button(
                 onClick = {
                     locationPermissionState.requestLocationPermission()
-//                    if (locationPermissionState.isLocationGranted && !isLocationTracking) {
-//                        locationViewModel.startLocationService()
+                    if (locationPermissionState.isLocationGranted) {
                         val intent = Intent(context, LocationService::class.java)
                         ContextCompat.startForegroundService(context, intent)
-//                    }
+                    }
 
                 },
                 shape = RoundedCornerShape(size = 8.dp),
@@ -315,7 +300,6 @@ private fun HomeView(locationViewModel: LocationViewModel) {
             Button(
                 onClick = {
 //                    if (isLocationTracking) {
-//                        locationViewModel.stopLocationService()
                         val intent = Intent(context, LocationService::class.java)
                         context.stopService(intent)
 //                    }
@@ -331,18 +315,5 @@ private fun HomeView(locationViewModel: LocationViewModel) {
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeViewPreview() {
-    val context = LocalContext.current
-//    val locationViewModel: LocationViewModel = viewModel(
-//        factory = LocationViewModelFactory(context)
-//    )
-
-    DeliveryAppTheme {
-        MainScreen(locationViewModel = LocationViewModel(Application()))
     }
 }
