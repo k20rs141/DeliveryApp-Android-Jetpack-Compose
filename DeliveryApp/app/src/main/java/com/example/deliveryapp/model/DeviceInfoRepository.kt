@@ -10,6 +10,7 @@ import android.telephony.TelephonyManager
 import androidx.core.app.ActivityCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,6 +21,7 @@ import javax.inject.Singleton
 
 data class DeviceInfo(
     val deviceId: String,
+    val carId: Int = 0,
     val timestamp: Long = System.currentTimeMillis()
 )
 
@@ -36,11 +38,13 @@ class DeviceInfoRepositoryImpl @Inject constructor(
 ): DeviceInfoRepository {
 
     private val deviceIdKey = stringPreferencesKey("device_id")
+    private val carIdKey = intPreferencesKey("car_id")
     private val timestampKey = longPreferencesKey("timestamp")
 
     override suspend fun saveDeviceInfo(deviceInfo: DeviceInfo) {
         dataStore.edit { preferences ->
             preferences[deviceIdKey] = deviceInfo.deviceId
+            preferences[carIdKey] = deviceInfo.carId
             preferences[timestampKey] = deviceInfo.timestamp
         }
     }
@@ -48,9 +52,10 @@ class DeviceInfoRepositoryImpl @Inject constructor(
     override suspend fun getDeviceInfo(): DeviceInfo? {
         return dataStore.data.map { preferences ->
             val deviceId = preferences[deviceIdKey]
+            val carId = preferences[carIdKey]
             val timestamp = preferences[timestampKey]
-            if (deviceId != null && timestamp != null) {
-                DeviceInfo(deviceId, timestamp)
+            if (deviceId != null && carId != null && timestamp != null) {
+                DeviceInfo(deviceId, carId, timestamp)
             } else {
                 null
             }
