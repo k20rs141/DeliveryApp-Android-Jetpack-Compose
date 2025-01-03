@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.daggar.hilt)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -56,7 +57,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.google.services)
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
     testImplementation(libs.junit)
@@ -76,4 +76,7 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
+    // Push Notification
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 }
