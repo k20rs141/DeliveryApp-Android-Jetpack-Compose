@@ -9,15 +9,13 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-interface DeviceTokenApiService {
+interface OhtomiApiService {
     @Headers("Content-Type: text/plain")
-    @POST("ohtomi/deviceTokenA.php")
+    @POST("tanaka/deviceTokenA.php")
     suspend fun postDeviceToken(
         @Body deviceToken: String
     ) : Response<Unit>
-}
 
-interface OhtomiApiService {
     @GET("androidApp/ocs_insert.php")
     suspend fun sendLocation(
         @Query("rate") heartRate: Int,

@@ -2,7 +2,6 @@ package com.example.deliveryapp.model
 
 import com.example.deliveryapp.data.LocationData
 import com.example.deliveryapp.data.SensorData
-import com.example.deliveryapp.network.DeviceTokenApiService
 import com.example.deliveryapp.network.OhtomiApiService
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,12 +15,11 @@ interface OhtomiRepository {
 
 @Singleton
 class OhtomiRepositoryImpl @Inject constructor(
-    private val deviceTokenApiService: DeviceTokenApiService,
     private val ohtomiApiService: OhtomiApiService
 ): OhtomiRepository {
     override suspend fun postDeviceToken(deviceToken: String): Result<Unit> {
         return try {
-            val response = deviceTokenApiService.postDeviceToken(deviceToken)
+            val response = ohtomiApiService.postDeviceToken(deviceToken)
             if (response.isSuccessful) {
                 val result = response.body()
                 if (result != null) {
