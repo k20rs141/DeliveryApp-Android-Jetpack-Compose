@@ -116,10 +116,10 @@ class LocationService : Service(), SensorEventListener {
     }
 
     private fun startLocationUpdates() {
-        val locationInterval: Long = 3000 // 30秒ごとに更新
+        val locationInterval: Long = 30000 // 30秒ごとに更新
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, locationInterval)
             .setWaitForAccurateLocation(false)
-            .setMinUpdateIntervalMillis(1000)
+            .setMinUpdateIntervalMillis(15000)
             .build()
 
         if (ActivityCompat.checkSelfPermission(
