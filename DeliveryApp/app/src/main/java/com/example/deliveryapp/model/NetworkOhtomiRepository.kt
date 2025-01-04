@@ -11,6 +11,7 @@ interface OhtomiRepository {
     suspend fun sendLocationData(locationData: LocationData): Result<Unit>
     suspend fun getDeviceData(imei: String, carId: Int): Result<Int>
     suspend fun getSensorData(carId: Int, limit: Int): Result<List<SensorData>>
+    suspend fun getSensorDetailData(deviceName: String): Result<List<SensorData>>
 }
 
 @Singleton
@@ -89,6 +90,24 @@ class OhtomiRepositoryImpl @Inject constructor(
     override suspend fun getSensorData(carId: Int, limit: Int): Result<List<SensorData>> {
         return try {
             val response = ohtomiApiService.getSensor(carId, limit)
+            if (response.isSuccessful) {
+                val sensorDataList = response.body()
+                if (sensorDataList != null) {
+                    Result.success(sensorDataList)
+                } else {
+                    Result.failure(Exception("Response body is null"))
+                }
+            } else {
+                Result.failure(Exception("API error: ${response.code()} ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getSensorDetailData(deviceName: String): Result<List<SensorData>> {
+        return try {
+            val response = ohtomiApiService.getSensorDetail(deviceName)
             if (response.isSuccessful) {
                 val sensorDataList = response.body()
                 if (sensorDataList != null) {

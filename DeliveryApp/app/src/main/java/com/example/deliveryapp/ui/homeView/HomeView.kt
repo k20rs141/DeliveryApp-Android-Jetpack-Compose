@@ -3,6 +3,7 @@ package com.example.deliveryapp.ui.homeView
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,16 +46,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.deliveryapp.R
 import com.example.deliveryapp.model.LocationService
 import com.example.deliveryapp.ui.LocationViewModel
 import com.example.deliveryapp.ui.dialog.CarIdInputDialog
 import com.example.deliveryapp.ui.dialog.LocationRequestDialog
 import com.example.deliveryapp.ui.rememberLocationPermissionState
+import com.example.deliveryapp.ui.sensorListView.SensorDetailView
 import com.example.deliveryapp.ui.sensorListView.SensorListView
 import com.example.deliveryapp.ui.sensorListView.SensorListViewModel
 import com.example.deliveryapp.ui.theme.Typography
@@ -116,7 +120,19 @@ fun MainScreen(locationViewModel: LocationViewModel) {
                     HomeView(locationViewModel)
                 }
                 composable("main/list") {
-                    SensorListView()
+                    SensorListView(navController = nestedNavController)
+                }
+                composable(
+                    "main/detail/{deviceName}",
+                    arguments = listOf(navArgument("deviceName") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val deviceName = backStackEntry.arguments?.getString("deviceName")
+                    Log.d("NavHost", "Navigating to SensorDetailView with deviceName: $deviceName")
+                    if (deviceName != null) {
+                        SensorDetailView(deviceName = deviceName)
+                    } else {
+                        Log.e("NavHost", "deviceName is null")
+                    }
                 }
             }
         }

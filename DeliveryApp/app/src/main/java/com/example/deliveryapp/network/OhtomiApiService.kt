@@ -45,4 +45,9 @@ interface OhtomiApiService {
         @Query("carId") carId: Int,
         @Query("limit") limit: Int  // 最新データだけ必要ならlimit=1
     ) : Response<List<SensorData>>
+
+    @GET("co2/dbread.php")
+    suspend fun getSensorDetail(
+        @Query("deviceName") deviceName: String
+    ) : Response<List<SensorData>>
 }

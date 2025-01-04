@@ -1,12 +1,12 @@
 package com.example.deliveryapp.ui.sensorListView
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,11 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.deliveryapp.R
 import com.example.deliveryapp.data.SensorData
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
-fun SensorListView(viewModel: SensorListViewModel = hiltViewModel(), modifier: Modifier = Modifier) {
+fun SensorListView(navController: NavController, viewModel: SensorListViewModel = hiltViewModel(), modifier: Modifier = Modifier) {
     val sensorState by viewModel.sensorState.collectAsState()
 
     when (sensorState) {
@@ -39,7 +42,15 @@ fun SensorListView(viewModel: SensorListViewModel = hiltViewModel(), modifier: M
         }
         is UiState.Success -> {
             val sensors = (sensorState as UiState.Success<List<SensorData>>).data
-            SensorListScreen(sensors, modifier = modifier.fillMaxSize())
+            SensorListScreen(
+                sensors,
+                onClick = { deviceName ->
+                    Log.d("Navigation", "Navigating to detail with deviceName: $deviceName")
+                    val encodedDeviceName = URLEncoder.encode(deviceName, StandardCharsets.UTF_8.toString())
+                    navController.navigate("main/detail/$encodedDeviceName")
+                },
+                modifier = modifier.fillMaxSize()
+            )
         }
         is UiState.Error -> {
             ErrorScreen(retryAction = { viewModel.fetchSensorData(508, 1) }, modifier = modifier.fillMaxSize())
@@ -50,7 +61,7 @@ fun SensorListView(viewModel: SensorListViewModel = hiltViewModel(), modifier: M
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(
@@ -76,14 +87,16 @@ fun ErrorScreen(retryAction: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SensorListScreen(sensorData: List<SensorData>, modifier: Modifier = Modifier) {
+fun SensorListScreen(sensorData: List<SensorData>, onClick: (String) -> Unit, modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier.background(MaterialTheme.colorScheme.primary)) {
         items(items = sensorData, key = { it.deviceId }) { sensor ->
             SensorCard(
                 sensor,
+                onClick = { onClick(sensor.deviceName) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(vertical = 8.dp)
             )
         }
     }

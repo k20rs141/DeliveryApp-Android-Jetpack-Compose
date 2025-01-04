@@ -22,12 +22,6 @@ import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
-sealed interface SensorDataUiState {
-    data class Success(val sensors: List<SensorData>) : SensorDataUiState
-    object Error : SensorDataUiState
-    object Loading : SensorDataUiState
-}
-
 sealed class UiState<out T> {
     object Initial : UiState<Nothing>()
     object Loading : UiState<Nothing>()
@@ -45,6 +39,9 @@ class SensorListViewModel  @Inject constructor(
 
     private val _sensorState = MutableStateFlow<UiState<List<SensorData>>>(UiState.Initial)
     val sensorState: StateFlow<UiState<List<SensorData>>> = _sensorState
+
+    private val _sensorDetailState = MutableStateFlow<UiState<List<SensorData>>>(UiState.Initial)
+    val sensorDetailState: StateFlow<UiState<List<SensorData>>> = _sensorDetailState
 
     init {
         viewModelScope.launch {
@@ -64,6 +61,21 @@ class SensorListViewModel  @Inject constructor(
                 onSuccess = { UiState.Success(it) },
                 onFailure = { UiState.Error(it.message ?: "Unknown Error") }
             )
+        }
+    }
+
+    fun fetchSensorDetailData(deviceName: String) {
+        viewModelScope.launch {
+            _sensorDetailState.value = UiState.Loading
+            try {
+                val result = ohtomiRepository.getSensorDetailData(deviceName)
+                _sensorDetailState.value = result.fold(
+                    onSuccess = { UiState.Success(it) },
+                    onFailure = { UiState.Error(it.message ?: "Unknown Error") }
+                )
+            } catch (e: Exception) {
+                _sensorDetailState.value = UiState.Error(e.toString())
+            }
         }
     }
 }
