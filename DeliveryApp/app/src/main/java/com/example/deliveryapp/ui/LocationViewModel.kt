@@ -82,19 +82,4 @@ class LocationViewModel @Inject constructor(
     fun locationTracking(isTracking: Boolean) {
         _isTracking.value = isTracking
     }
-
-    fun sendLocationUpdate(locationData: LocationData): Result<LocationData> {
-        viewModelScope.launch {
-            _locationState.value = UiState.Loading
-
-            ohtomiRepository.sendLocationData(locationData)
-                .onSuccess {
-                    _locationState.value = UiState.Success(locationData)
-                }
-                .onFailure { error ->
-                    _locationState.value = UiState.Error(error.message ?: "Unknown error")
-                }
-        }
-        return Result.success(locationData)
-    }
 }
