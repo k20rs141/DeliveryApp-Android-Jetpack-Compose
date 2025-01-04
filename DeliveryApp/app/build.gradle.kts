@@ -79,4 +79,10 @@ dependencies {
     // Push Notification
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    // Vico Chart
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m2)
+    implementation(libs.vico.compose.m3)
+    implementation(libs.vico.core)
+    implementation(libs.vico.views)
 }
